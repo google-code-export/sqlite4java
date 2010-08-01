@@ -1,4 +1,5 @@
 #summary How to start using sqlite4java in your project
+#labels Featured
 
 = Getting Started =
 
