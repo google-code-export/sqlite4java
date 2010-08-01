@@ -1,5 +1,4 @@
 #summary how to build sqlite4java distributables from source files
-#labels Featured
 
 = Building from Source =
 
