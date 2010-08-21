@@ -5,5 +5,9 @@
   * New `SQLiteQueue` and `SQLiteJob` classes - a job queue implementation for accessing single-threaded SQLite connection in a multi-threaded or GUI application ([http://code.google.com/p/sqlite4java/issues/detail?id=3 #3]).
   * `SQLiteConnection.dispose()` method contract changed: it is now not allowed to call dispose from a different (non-confining) thread, due to possible JVM crash ([http://code.google.com/p/sqlite4java/issues/detail?id=18 #18]). If called from different thread, the method will fail softly.
   * New `SQLiteConnection.getOpenFlags()` method return the flags that were used to open the connection.
+  * Updated contract for `SQLiteStatement.columnCount()`: now it can return the number of result columns before running the statement, or after statement has completed. However, the result in those cases is not stable (see javadocs)([http://code.google.com/p/sqlite4java/issues/detail?id=13 #13]).
+
+Thanks to Olivier Monaco for patches and suggestions.
+
   
   
