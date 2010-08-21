@@ -1,0 +1,5 @@
+#summary Version-to-version changes
+
+=== Next Version ===
+
+  * Added job queue implementation (SQLiteQueue and SQLiteJob) for accessing single-threaded SQLite connection in a multi-threaded or GUI application (#3). 
