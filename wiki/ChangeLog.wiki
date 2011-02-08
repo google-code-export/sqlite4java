@@ -1,6 +1,11 @@
 #summary Version-to-version changes
 #labels Featured
 
+=== Build 213 ===
+
+  * SQLite upgraded to 3.7.4
+  * SQLiteLongArray support in native code is completely rewritten. It is now reliable and optimized (you can specify that the numbers are sorted and/or unique to speed up lookups).
+
 === Build 201 ===
 
   * New `SQLiteQueue` and `SQLiteJob` classes - a job queue implementation for accessing single-threaded SQLite connection in a multi-threaded or GUI application ([http://code.google.com/p/sqlite4java/issues/detail?id=3 #3]).
