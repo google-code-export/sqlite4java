@@ -20,7 +20,7 @@ Sample POM:
 <project>
   ...
   <properties>
-    <sqlite4java.version>0.201</sqlite4java.version>
+    <sqlite4java.version>0.213</sqlite4java.version>
   </properties>
 
   <dependencies>
