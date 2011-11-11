@@ -20,7 +20,7 @@ public class SQLiteBackup {
 
     if (rc == SQLITE_BUSY || rc == SQLITE_LOCKED) {
       throw new SQLiteBusyException(rc, null);
-    } else if (rc != SQLITE_OK || rc != SQLITE_DONE) {
+    } else if (rc != SQLITE_OK && rc != SQLITE_DONE) {
       throw new SQLiteException(rc, null);
     }
 
