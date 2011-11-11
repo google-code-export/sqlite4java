@@ -847,6 +847,29 @@ public final class SQLiteConnection {
     return createArray(null, true);
   }
 
+  public SQLiteBackup initializeBackup(String sourceDBName, File destDBFile, int flags) throws SQLiteException {
+    checkThread();
+
+    SQLiteConnection destConnection = new SQLiteConnection(destDBFile).openV2(flags);
+
+    SWIGTYPE_p_sqlite3 sourceDBHandler = handle();
+    SWIGTYPE_p_sqlite3 destDBHandler = destConnection.handle();
+
+    SWIGTYPE_p_sqlite3_backup backup = _SQLiteSwigged.sqlite3_backup_init(destDBHandler, "main", sourceDBHandler, sourceDBName);
+
+    if (backup == null) {
+      int errorCode = destConnection.getErrorCode();
+      String errorMessage = _SQLiteSwigged.sqlite3_errmsg(destDBHandler);
+
+      destConnection.dispose();
+
+      throw new SQLiteException(errorCode, errorMessage);
+    }
+
+    return new SQLiteBackup(backup, destConnection);
+
+  }
+
   private SQLiteLongArray createArray0(String name, SQLiteController controller) throws SQLiteException {
     SWIGTYPE_p_sqlite3 handle = handle();
     if (name == null)

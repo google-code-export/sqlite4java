@@ -145,6 +145,11 @@ public interface SQLiteConstants {
    */
   int WRAPPER_BLOB_DISPOSED = -93;
 
+  /**
+   * Backup dispoded
+   */
+  int WRAPPER_BACKUP_DISPOSED = -113;
+
   int WRAPPER_INVALID_ARG_1 = -11;
   int WRAPPER_INVALID_ARG_2 = -12;
   int WRAPPER_INVALID_ARG_3 = -13;
