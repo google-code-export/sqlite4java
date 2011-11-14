@@ -866,9 +866,15 @@ public final class SQLiteConnection {
       throw new SQLiteException(errorCode, errorMessage);
     }
 
-    return new SQLiteBackup(backup, destConnection);
+    return new SQLiteBackup(myUncachedController,backup, destConnection);
 
   }
+
+  public SQLiteBackup initializeBackup(File destDBFile, int flags) throws SQLiteException {
+    return initializeBackup("main", destDBFile, flags);
+  }
+
+//  public SQLiteBackup
 
   private SQLiteLongArray createArray0(String name, SQLiteController controller) throws SQLiteException {
     SWIGTYPE_p_sqlite3 handle = handle();
