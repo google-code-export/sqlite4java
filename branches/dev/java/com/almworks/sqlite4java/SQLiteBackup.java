@@ -17,7 +17,7 @@ public class SQLiteBackup {
     myDestination = destination;
   }
 
-  public int step(int pagesToBackup) throws SQLiteException, SQLiteBusyException {
+  public void step(int pagesToBackup) throws SQLiteException, SQLiteBusyException {
     myController.validate();
 
     SWIGTYPE_p_sqlite3_backup handler = handle();
@@ -29,29 +29,28 @@ public class SQLiteBackup {
       throw new SQLiteException(rc, null);
     }
 
-    return rc;
   }
 
-  public SQLiteConnection getDestinationDB() {
+  public SQLiteConnection getDestinationConnection() {
     return myDestination;
   }
 
-  public void dispose(boolean disposeDestDB) {
+  public void dispose(boolean disposeDestinationConnection) {
     if (myHandle != null) {
       _SQLiteSwigged.sqlite3_backup_finish(myHandle);
       myHandle = null;
       myController = SQLiteController.getDisposed(myController);
     }
-    if (disposeDestDB) {
+    if (disposeDestinationConnection) {
       myDestination.dispose();
     }
   }
 
   public void dispose() {
-    dispose(false);
+    dispose(true);
   }
 
-  public int getPagecount() throws SQLiteException {
+  public int getPageCount() throws SQLiteException {
     myController.validate();
 
     SWIGTYPE_p_sqlite3_backup handle = handle();
