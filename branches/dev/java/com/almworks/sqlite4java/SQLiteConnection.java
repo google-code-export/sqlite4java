@@ -866,7 +866,9 @@ public final class SQLiteConnection {
       throw new SQLiteException(errorCode, errorMessage);
     }
 
-    return new SQLiteBackup(myUncachedController,backup, destConnection);
+    SQLiteController destController = destConnection.myUncachedController;
+
+    return new SQLiteBackup(myUncachedController, destController, backup, destConnection);
 
   }
 

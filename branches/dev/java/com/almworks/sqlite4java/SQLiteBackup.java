@@ -9,16 +9,20 @@ public class SQLiteBackup {
 
   private SQLiteConnection myDestination;
 
-  private SQLiteController myController;
+  private SQLiteController myDestinationController;
 
-  SQLiteBackup(SQLiteController controller, SWIGTYPE_p_sqlite3_backup handler, SQLiteConnection destination) {
-    myController = controller;
+  private SQLiteController mySourceController;
+
+  SQLiteBackup(SQLiteController sourceController, SQLiteController destinationController, SWIGTYPE_p_sqlite3_backup handler, SQLiteConnection destination) {
+    mySourceController = sourceController;
+    myDestinationController = destinationController;
     myHandle = handler;
     myDestination = destination;
   }
 
   public void step(int pagesToBackup) throws SQLiteException, SQLiteBusyException {
-    myController.validate();
+    mySourceController.validate();
+    myDestinationController.validate();
 
     SWIGTYPE_p_sqlite3_backup handler = handle();
     int rc = _SQLiteSwigged.sqlite3_backup_step(handler, pagesToBackup);
@@ -28,7 +32,6 @@ public class SQLiteBackup {
     } else if (rc != SQLITE_OK && rc != SQLITE_DONE) {
       throw new SQLiteException(rc, null);
     }
-
   }
 
   public SQLiteConnection getDestinationConnection() {
@@ -36,14 +39,21 @@ public class SQLiteBackup {
   }
 
   public void dispose(boolean disposeDestinationConnection) {
+    if (disposeDestinationConnection) {
+    myDestination.dispose();
+    }
+    try{
+      mySourceController.validate();
+    } catch (SQLiteException e) {
+      Internal.recoverableError(this, "invalid dispose: " + e, true);
+      return;
+    }
     if (myHandle != null) {
       _SQLiteSwigged.sqlite3_backup_finish(myHandle);
       myHandle = null;
-      myController = SQLiteController.getDisposed(myController);
+      mySourceController = SQLiteController.getDisposed(mySourceController);
     }
-    if (disposeDestinationConnection) {
-      myDestination.dispose();
-    }
+
   }
 
   public void dispose() {
@@ -51,14 +61,16 @@ public class SQLiteBackup {
   }
 
   public int getPageCount() throws SQLiteException {
-    myController.validate();
+    mySourceController.validate();
+    myDestinationController.validate();
 
     SWIGTYPE_p_sqlite3_backup handle = handle();
     return _SQLiteSwigged.sqlite3_backup_pagecount(handle);
   }
 
   public int getRemaining() throws SQLiteException {
-    myController.validate();
+    mySourceController.validate();
+    myDestinationController.validate();
 
     SWIGTYPE_p_sqlite3_backup handle = handle();
     return _SQLiteSwigged.sqlite3_backup_remaining(handle);
