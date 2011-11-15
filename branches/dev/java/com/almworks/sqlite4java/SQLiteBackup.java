@@ -26,16 +26,14 @@ public class SQLiteBackup {
 
     SWIGTYPE_p_sqlite3_backup handler = handle();
 
-    boolean finished = false;
     int rc = _SQLiteSwigged.sqlite3_backup_step(handler, pagesToBackup);
+    throwResult(rc, "Backup step failed");
 
-    if (rc == SQLITE_BUSY || rc == SQLITE_LOCKED) {
-      throw new SQLiteBusyException(rc, null);
-    } else if (rc != SQLITE_OK && rc != SQLITE_DONE) {
-      throw new SQLiteException(rc, null);
-    } else if (rc == SQLITE_DONE) {
+    boolean finished = false;
+    if (rc == SQLITE_DONE) {
       finished = true;
     }
+
     return finished;
   }
 
@@ -87,5 +85,10 @@ public class SQLiteBackup {
       throw new SQLiteException(WRAPPER_BACKUP_DISPOSED, null);
     }
     return handle;
+  }
+
+  private void throwResult(int rc, String operation) throws SQLiteException {
+    if (rc == SQLITE_DONE) return;
+    myDestination.throwResult(rc, operation);
   }
 }

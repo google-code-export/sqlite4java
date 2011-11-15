@@ -859,11 +859,11 @@ public final class SQLiteConnection {
 
     if (backup == null) {
       int errorCode = destConnection.getErrorCode();
-      String errorMessage = _SQLiteSwigged.sqlite3_errmsg(destDBHandler);
-
-      destConnection.dispose();
-
-      throw new SQLiteException(errorCode, errorMessage);
+      try{
+        destConnection.throwResult(errorCode,"Backup initialization failed");
+      } finally {
+        destConnection.dispose();
+      }
     }
 
     SQLiteController destController = destConnection.myUncachedController;
