@@ -874,7 +874,9 @@ public final class SQLiteConnection {
     return initializeBackup("main", destDBFile, flags);
   }
 
-//  public SQLiteBackup
+  public SQLiteBackup initializeBackup(File destDBFile) throws SQLiteException {
+    return initializeBackup(destDBFile, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE);
+  }
 
   private SQLiteLongArray createArray0(String name, SQLiteController controller) throws SQLiteException {
     SWIGTYPE_p_sqlite3 handle = handle();
