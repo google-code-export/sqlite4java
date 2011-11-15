@@ -18,11 +18,16 @@ public class SQLiteBackup {
     myDestinationController = destinationController;
     myHandle = handler;
     myDestination = destination;
+    Internal.logFine(this, "instantiated");
   }
 
   public boolean step(int pagesToBackup) throws SQLiteException, SQLiteBusyException {
     mySourceController.validate();
     myDestinationController.validate();
+
+    if (Internal.isFineLogging()) {
+      Internal.logFine(this, "step(" + pagesToBackup + ")" );
+    }
 
     SWIGTYPE_p_sqlite3_backup handler = handle();
 
@@ -51,6 +56,7 @@ public class SQLiteBackup {
       Internal.recoverableError(this, "invalid dispose: " + e, true);
       return;
     }
+    Internal.logFine(this, "disposing");
     if (myHandle != null) {
       _SQLiteSwigged.sqlite3_backup_finish(myHandle);
       myHandle = null;
@@ -77,6 +83,12 @@ public class SQLiteBackup {
 
     SWIGTYPE_p_sqlite3_backup handle = handle();
     return _SQLiteSwigged.sqlite3_backup_remaining(handle);
+  }
+
+  @Override
+  public String toString() {
+
+    return "Backup [ ->" + myDestination + "]";
   }
 
   private SWIGTYPE_p_sqlite3_backup handle() throws SQLiteException {

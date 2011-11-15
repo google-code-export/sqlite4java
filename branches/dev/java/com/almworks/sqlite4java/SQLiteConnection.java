@@ -852,6 +852,10 @@ public final class SQLiteConnection {
 
     SQLiteConnection destConnection = new SQLiteConnection(destDBFile).openV2(flags);
 
+    if(Internal.isFineLogging()) {
+      Internal.logFine(this, "initializeBackup to " + destConnection);
+    }
+
     SWIGTYPE_p_sqlite3 sourceDBHandler = handle();
     SWIGTYPE_p_sqlite3 destDBHandler = destConnection.handle();
 
