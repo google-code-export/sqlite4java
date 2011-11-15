@@ -20,18 +20,23 @@ public class SQLiteBackup {
     myDestination = destination;
   }
 
-  public void step(int pagesToBackup) throws SQLiteException, SQLiteBusyException {
+  public boolean step(int pagesToBackup) throws SQLiteException, SQLiteBusyException {
     mySourceController.validate();
     myDestinationController.validate();
 
     SWIGTYPE_p_sqlite3_backup handler = handle();
+
+    boolean finished = false;
     int rc = _SQLiteSwigged.sqlite3_backup_step(handler, pagesToBackup);
 
     if (rc == SQLITE_BUSY || rc == SQLITE_LOCKED) {
       throw new SQLiteBusyException(rc, null);
     } else if (rc != SQLITE_OK && rc != SQLITE_DONE) {
       throw new SQLiteException(rc, null);
+    } else if (rc == SQLITE_DONE) {
+      finished = true;
     }
+    return finished;
   }
 
   public SQLiteConnection getDestinationConnection() {
