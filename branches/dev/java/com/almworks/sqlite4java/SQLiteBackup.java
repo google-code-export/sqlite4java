@@ -1,7 +1,8 @@
 package com.almworks.sqlite4java;
 
 
-import static com.almworks.sqlite4java.SQLiteConstants.*;
+import static com.almworks.sqlite4java.SQLiteConstants.SQLITE_DONE;
+import static com.almworks.sqlite4java.SQLiteConstants.WRAPPER_BACKUP_DISPOSED;
 
 public class SQLiteBackup {
 
@@ -26,7 +27,7 @@ public class SQLiteBackup {
     myDestinationController.validate();
 
     if (Internal.isFineLogging()) {
-      Internal.logFine(this, "step(" + pagesToBackup + ")" );
+      Internal.logFine(this, "step(" + pagesToBackup + ")");
     }
 
     SWIGTYPE_p_sqlite3_backup handler = handle();
@@ -48,9 +49,9 @@ public class SQLiteBackup {
 
   public void dispose(boolean disposeDestinationConnection) {
     if (disposeDestinationConnection) {
-    myDestination.dispose();
+      myDestination.dispose();
     }
-    try{
+    try {
       mySourceController.validate();
     } catch (SQLiteException e) {
       Internal.recoverableError(this, "invalid dispose: " + e, true);
@@ -60,7 +61,7 @@ public class SQLiteBackup {
     if (myHandle != null) {
       _SQLiteSwigged.sqlite3_backup_finish(myHandle);
       myHandle = null;
-      mySourceController = SQLiteController.getDisposed(mySourceController);
+      mySourceController = myDestinationController = SQLiteController.getDisposed(mySourceController);
     }
 
   }
