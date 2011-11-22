@@ -50,6 +50,7 @@ public class SQLiteBackup {
   public void dispose(boolean disposeDestinationConnection) {
     try {
       mySourceController.validate();
+      myDestinationController.validate();
     } catch (SQLiteException e) {
       Internal.recoverableError(this, "invalid dispose: " + e, true);
       return;
