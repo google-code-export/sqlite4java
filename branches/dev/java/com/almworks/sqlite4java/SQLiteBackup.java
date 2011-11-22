@@ -48,9 +48,6 @@ public class SQLiteBackup {
   }
 
   public void dispose(boolean disposeDestinationConnection) {
-    if (disposeDestinationConnection) {
-      myDestination.dispose();
-    }
     try {
       mySourceController.validate();
     } catch (SQLiteException e) {
@@ -62,6 +59,9 @@ public class SQLiteBackup {
       _SQLiteSwigged.sqlite3_backup_finish(myHandle);
       myHandle = null;
       mySourceController = myDestinationController = SQLiteController.getDisposed(mySourceController);
+    }
+    if (disposeDestinationConnection) {
+      myDestination.dispose();
     }
 
   }
