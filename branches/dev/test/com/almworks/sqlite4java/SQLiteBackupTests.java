@@ -1,16 +1,17 @@
 package com.almworks.sqlite4java;
 
-import static com.almworks.sqlite4java.SQLiteConstants.*;
 import java.io.File;
+import java.util.Arrays;
+import java.util.logging.Level;
 
-public class SQLiteBackupTests extends SQLiteConnectionFixture{
+import static com.almworks.sqlite4java.SQLiteConstants.WRAPPER_CONFINEMENT_VIOLATED;
 
-//  public void testOneStepBackUp() {
+public class SQLiteBackupTests extends SQLiteConnectionFixture {
 
-//  }
+  private static final int ROWS_NUMBER = 5400;
+
   public void testOneStepBackupMemoryToFile() throws SQLiteException {
     backupOneStep(true, new File(tempName("db")));
-
   }
 
   public void testOneStepBackupMemoryToMemory() throws SQLiteException {
@@ -31,13 +32,13 @@ public class SQLiteBackupTests extends SQLiteConnectionFixture{
     SQLiteBackup backup = source.initializeBackup(null);
 
     source.dispose();
-    assertStepFails(backup);
+    assertStepFailsWithError(backup, WRAPPER_CONFINEMENT_VIOLATED);
 
     source = createDB(true);
     backup = source.initializeBackup(null);
     SQLiteConnection destination = backup.getDestinationConnection();
     destination.dispose();
-    assertStepFails(backup);
+    assertStepFailsWithError(backup, WRAPPER_CONFINEMENT_VIOLATED);
     source.dispose();
 
     source = createDB(true);
@@ -45,32 +46,172 @@ public class SQLiteBackupTests extends SQLiteConnectionFixture{
     destination = backup.getDestinationConnection();
     source.dispose();
     destination.dispose();
-    assertStepFails(backup);
-
-//    backup.dispose();
-//    assertEquals(12,13);
+    assertStepFailsWithError(backup, WRAPPER_CONFINEMENT_VIOLATED);
   }
 
+  public void testDestinationAutoUpdate() throws SQLiteException {
+    SQLiteConnection source = createDB(false);
+
+    SQLiteBackup backup = source.initializeBackup(null);
+    SQLiteConnection destination = backup.getDestinationConnection();
+    boolean finished = backup.step(10);
+    assertFalse(finished);
+
+    int oldPageCount = backup.getPageCount();
+    int oldRemaining = backup.getRemaining();
+
+    modifyDB(source);
+
+    int nPages = 1;
+    finished = backup.step(nPages);
+    assertFalse(finished);
+
+    int newPageCount = backup.getPageCount();
+    int newRemaining = backup.getRemaining();
+    assertEquals(oldRemaining - nPages + (newPageCount - oldPageCount), newRemaining);
+
+    backup.step(-1);
+    backup.dispose(false);
+
+    assertDBSEquals(source, destination);
+
+    source.dispose();
+    destination.dispose();
+  }
+
+  public void testBackupRestarting() throws SQLiteException {
+    SQLiteConnection source = createDB(false);
+    File sourceDBFile = source.getDatabaseFile();
+    SQLiteConnection anotherConnectionToSource = new SQLiteConnection(sourceDBFile).open();
+
+    SQLiteBackup backup = source.initializeBackup(null);
+    SQLiteConnection destination = backup.getDestinationConnection();
+    boolean finished = backup.step(10);
+    assertFalse(finished);
+
+    int oldPageCount = backup.getPageCount();
+    int oldRemaining = backup.getRemaining();
+
+    modifyDB(anotherConnectionToSource);
+
+    int nPages = 1;
+    finished = backup.step(nPages);
+    assertFalse(finished);
+
+    int newPageCount = backup.getPageCount();
+    int newRemaining = backup.getRemaining();
+
+    assertTrue(newPageCount >= oldPageCount);
+    assertEquals(newRemaining, newPageCount - nPages);
+
+    backup.step(-1);
+    backup.dispose(false);
+
+    assertDBSEquals(source, destination);
+    assertDBSEquals(anotherConnectionToSource, destination);
+
+    source.dispose();
+    destination.dispose();
+    anotherConnectionToSource.dispose();
+  }
+
+  public void testBackupWithSharingLockOnSource() throws SQLiteException {
+    SQLiteConnection source = createDB(false);
+    SQLiteConnection anotherConnectionToSource = new SQLiteConnection(source.getDatabaseFile()).open();
+
+    SQLiteBackup backup = source.initializeBackup(null);
+    SQLiteConnection destination = backup.getDestinationConnection();
+
+    SQLiteStatement select = anotherConnectionToSource.prepare("select * from tab");
+    select.step();
+    backup.step(-1);
+    backup.dispose(false);
+
+    assertDBSEquals(source, destination);
+
+    source.dispose();
+    destination.dispose();
+    anotherConnectionToSource.dispose();
+  }
+
+  public void testFailWithoutExclusiveLock() throws SQLiteException {
+    SQLiteConnection source = createDB(false);
+
+    SQLiteBackup backup = source.initializeBackup(null);
+
+    source.exec("begin immediate");
+    SQLiteStatement insert = source.prepare("insert into tab values (?)").bind(1, ROWS_NUMBER + 15);
+    insert.step();
+
+    try {
+      backup.step(-1);
+      fail("Backup without exclusive lock");
+    } catch (SQLiteBusyException e) {
+      //ok
+    }
+    insert.dispose();
+    backup.dispose();
+
+    source.dispose();
+  }
+
+  public void testBla() throws SQLiteException {
+    SQLiteConnection source = createDB(true);
+    SQLiteBackup backup = source.initializeBackup(null);
+    SQLiteConnection destination = backup.getDestinationConnection();
+    destination.dispose();
+    backup.dispose();
+    assertEquals(12,12);
+  }
 
   private SQLiteConnection createDB(boolean inMemory) throws SQLiteException {
     SQLiteConnection connection = inMemory ? memDb() : fileDb();
-    connection = connection.open().exec("create table tab (first integer, last integer)");
-    long first = 13;
-    long last = 99;
-    SQLiteStatement statement = connection.prepare("insert into tab values (13, 99)");
-    statement.step();
+    connection = connection.open().exec("create table tab (val integer)");
+
+    SQLiteStatement statement = connection.prepare("insert into tab values (?)");
+
+    //Setting log level to WARNING because FINE logging cause many useless and similarly identical messages/ that crash JUnit
+    Level previousLevel = java.util.logging.Logger.getLogger("com.almworks.sqlite4java").getLevel();
+    java.util.logging.Logger.getLogger("com.almworks.sqlite4java").setLevel(java.util.logging.Level.WARNING);
+    connection.exec("begin immediate");
+    for (long i = 0; i < ROWS_NUMBER; i++) {
+      statement.bind(1, i);
+      statement.step();
+      statement.reset();
+    }
+    java.util.logging.Logger.getLogger("com.almworks.sqlite4java").setLevel(previousLevel);
+    connection.exec("commit");
     statement.dispose();
+
     return connection;
   }
 
-  private void assertDBAndModelEquals(SQLiteConnection backup) throws SQLiteException {
-    long first = 13;
-    long last = 99;
-    SQLiteStatement statement = backup.prepare("select * from tab");
-    statement.step();
-    assertEquals(first, statement.columnLong(0));
-    assertEquals(last, statement.columnLong(1));
-    statement.dispose();
+
+  private void modifyDB(SQLiteConnection connection) throws SQLiteException {
+    SQLiteStatement modifyStatement = connection.prepare("insert into tab values(?)");
+    connection.exec("begin immediate");
+    for (int i = 1; i < 400; i++) {
+      modifyStatement.bind(1, ROWS_NUMBER + i);
+      modifyStatement.step();
+      modifyStatement.reset();
+    }
+    connection.exec("commit");
+    modifyStatement.dispose();
+  }
+
+  private void assertDBSEquals(SQLiteConnection source, SQLiteConnection backup) throws SQLiteException {
+    long sourceValues[] = new long[ROWS_NUMBER];
+    long backupValues[] = new long[ROWS_NUMBER];
+    String selectStatement = "select val from tab";
+    SQLiteStatement sourceStatement = source.prepare(selectStatement);
+    SQLiteStatement backupStatement = backup.prepare(selectStatement);
+
+    sourceStatement.loadLongs(0, sourceValues, 0, sourceValues.length);
+    backupStatement.loadLongs(0, backupValues, 0, backupValues.length);
+
+    backupStatement.dispose();
+    sourceStatement.dispose();
+    assertTrue(Arrays.equals(sourceValues, backupValues));
   }
 
   private void backupOneStep(boolean sourceInMemory, File destinationFile) throws SQLiteException {
@@ -79,20 +220,20 @@ public class SQLiteBackupTests extends SQLiteConnectionFixture{
 
     SQLiteConnection destination = backup.getDestinationConnection();
     boolean finished = backup.step(-1);
-    assertEquals(true, finished);
+    assertTrue(finished);
 
     backup.dispose(false);
+    assertDBSEquals(source, destination);
     source.dispose();
-    assertDBAndModelEquals(destination);
     destination.dispose();
   }
 
-  private void assertStepFails(SQLiteBackup backup){
+  private void assertStepFailsWithError(SQLiteBackup backup, int errorCode) {
     try {
       backup.step(-1);
       fail("Backup disposed DB");
     } catch (SQLiteException e) {
-      assertEquals(e.getErrorCode(), WRAPPER_CONFINEMENT_VIOLATED);
+      assertEquals(e.getErrorCode(), errorCode);
     }
   }
 
