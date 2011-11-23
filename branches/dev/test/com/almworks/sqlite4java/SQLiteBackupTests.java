@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.logging.Level;
 
-import static com.almworks.sqlite4java.SQLiteConstants.WRAPPER_CONFINEMENT_VIOLATED;
+import static com.almworks.sqlite4java.SQLiteConstants.WRAPPER_MISUSE;
 
 public class SQLiteBackupTests extends SQLiteConnectionFixture {
 
@@ -32,13 +32,13 @@ public class SQLiteBackupTests extends SQLiteConnectionFixture {
     SQLiteBackup backup = source.initializeBackup(null);
 
     source.dispose();
-    assertStepFailsWithError(backup, WRAPPER_CONFINEMENT_VIOLATED);
+    assertStepFailsWithError(backup, WRAPPER_MISUSE);
 
     source = createDB(true);
     backup = source.initializeBackup(null);
     SQLiteConnection destination = backup.getDestinationConnection();
     destination.dispose();
-    assertStepFailsWithError(backup, WRAPPER_CONFINEMENT_VIOLATED);
+    assertStepFailsWithError(backup, WRAPPER_MISUSE);
     source.dispose();
 
     source = createDB(true);
@@ -46,7 +46,7 @@ public class SQLiteBackupTests extends SQLiteConnectionFixture {
     destination = backup.getDestinationConnection();
     source.dispose();
     destination.dispose();
-    assertStepFailsWithError(backup, WRAPPER_CONFINEMENT_VIOLATED);
+    assertStepFailsWithError(backup, WRAPPER_MISUSE);
   }
 
   public void testDestinationAutoUpdate() throws SQLiteException {
@@ -68,7 +68,9 @@ public class SQLiteBackupTests extends SQLiteConnectionFixture {
 
     int newPageCount = backup.getPageCount();
     int newRemaining = backup.getRemaining();
-    assertEquals(oldRemaining - nPages + (newPageCount - oldPageCount), newRemaining);
+    int additionalPages = newPageCount - oldPageCount;
+    int newRemainingExpected = oldRemaining - nPages + additionalPages;
+    assertEquals(newRemainingExpected, newRemaining);
 
     backup.step(-1);
     backup.dispose(false);
@@ -89,9 +91,6 @@ public class SQLiteBackupTests extends SQLiteConnectionFixture {
     boolean finished = backup.step(10);
     assertFalse(finished);
 
-    int oldPageCount = backup.getPageCount();
-    int oldRemaining = backup.getRemaining();
-
     modifyDB(anotherConnectionToSource);
 
     int nPages = 1;
@@ -100,9 +99,9 @@ public class SQLiteBackupTests extends SQLiteConnectionFixture {
 
     int newPageCount = backup.getPageCount();
     int newRemaining = backup.getRemaining();
+    int newRemainingExpected = newPageCount - nPages;
 
-    assertTrue(newPageCount >= oldPageCount);
-    assertEquals(newRemaining, newPageCount - nPages);
+    assertEquals(newRemainingExpected, newRemaining);
 
     backup.step(-1);
     backup.dispose(false);
@@ -134,35 +133,56 @@ public class SQLiteBackupTests extends SQLiteConnectionFixture {
     anotherConnectionToSource.dispose();
   }
 
-  public void testFailWithoutExclusiveLock() throws SQLiteException {
+  public void testBackupWithReservedLock() throws SQLiteException {
     SQLiteConnection source = createDB(false);
+    SQLiteConnection anotherConnectionToSource = new SQLiteConnection(source.getDatabaseFile()).open();
 
     SQLiteBackup backup = source.initializeBackup(null);
 
-    source.exec("begin immediate");
-    SQLiteStatement insert = source.prepare("insert into tab values (?)").bind(1, ROWS_NUMBER + 15);
-    insert.step();
+    anotherConnectionToSource.exec("begin immediate");
 
-    try {
-      backup.step(-1);
-      fail("Backup without exclusive lock");
-    } catch (SQLiteBusyException e) {
-      //ok
-    }
-    insert.dispose();
+    boolean finished = backup.step(-1);
+    assertTrue(finished);
+
     backup.dispose();
-
     source.dispose();
   }
 
-  public void testBla() throws SQLiteException {
-    SQLiteConnection source = createDB(true);
+  public void testBackupFailWithReservedLockEstablishedBySourceConnection() throws SQLiteException {
+    SQLiteConnection source = createDB(false);
     SQLiteBackup backup = source.initializeBackup(null);
-    SQLiteConnection destination = backup.getDestinationConnection();
-    destination.dispose();
+
+    source.exec("begin immediate");
+
+    try {
+      backup.step(-1);
+      fail("Backup when RESERVED lock established on source connection by itself");
+    } catch (SQLiteBusyException e) {
+      //ok
+    }
+
     backup.dispose();
-    assertEquals(12,12);
+    source.dispose();
   }
+
+  public void testBackupFailWhenExclusiveLockOnSourceEstablished() throws SQLiteException {
+    SQLiteConnection source = createDB(false);
+    SQLiteConnection anotherConnectionToSource = new SQLiteConnection(source.getDatabaseFile()).open();
+
+    SQLiteBackup backup = source.initializeBackup(null);
+
+    anotherConnectionToSource.exec("begin exclusive");
+
+    try {
+      backup.step(-1);
+      fail("Backup when EXCLUSIVE lock established on source db");
+    } catch (SQLiteBusyException e) {
+      //ok
+    }
+    backup.dispose();
+    source.dispose();
+  }
+
 
   private SQLiteConnection createDB(boolean inMemory) throws SQLiteException {
     SQLiteConnection connection = inMemory ? memDb() : fileDb();
@@ -188,30 +208,44 @@ public class SQLiteBackupTests extends SQLiteConnectionFixture {
 
 
   private void modifyDB(SQLiteConnection connection) throws SQLiteException {
-    SQLiteStatement modifyStatement = connection.prepare("insert into tab values(?)");
-    connection.exec("begin immediate");
-    for (int i = 1; i < 400; i++) {
-      modifyStatement.bind(1, ROWS_NUMBER + i);
-      modifyStatement.step();
-      modifyStatement.reset();
-    }
-    connection.exec("commit");
+    SQLiteStatement modifyStatement = connection.prepare("delete from tab where val <= 1000");
+    modifyStatement.step();
+//    SQLiteStatement modifyStatement = connection.prepare("insert into tab values(?)");
+//    connection.exec("begin immediate");
+//    for (int i = 1; i < 400; i++) {
+//      modifyStatement.bind(1, ROWS_NUMBER + i);
+//      modifyStatement.step();
+//      modifyStatement.reset();
+//    }
+//    connection.exec("commit");
     modifyStatement.dispose();
   }
 
   private void assertDBSEquals(SQLiteConnection source, SQLiteConnection backup) throws SQLiteException {
-    long sourceValues[] = new long[ROWS_NUMBER];
-    long backupValues[] = new long[ROWS_NUMBER];
-    String selectStatement = "select val from tab";
-    SQLiteStatement sourceStatement = source.prepare(selectStatement);
-    SQLiteStatement backupStatement = backup.prepare(selectStatement);
+    int sourceColumnCount = columnCount(source);
+    int backupColumnCount = columnCount(backup);
+    assertEquals(sourceColumnCount, backupColumnCount);
 
-    sourceStatement.loadLongs(0, sourceValues, 0, sourceValues.length);
-    backupStatement.loadLongs(0, backupValues, 0, backupValues.length);
-
-    backupStatement.dispose();
-    sourceStatement.dispose();
+    long sourceValues[] = getArray(source, sourceColumnCount);
+    long backupValues[] = getArray(backup, backupColumnCount);
     assertTrue(Arrays.equals(sourceValues, backupValues));
+  }
+
+  private int columnCount(SQLiteConnection connection) throws SQLiteException {
+    SQLiteStatement countStatement = connection.prepare("select count(val) from tab");
+    countStatement.step();
+    int result = countStatement.columnInt(0);
+    countStatement.dispose();
+    return result;
+  }
+
+  private long[] getArray(SQLiteConnection connection, int arrayLength) throws SQLiteException {
+    long result[] = new long[arrayLength];
+    SQLiteStatement selectStatement = connection.prepare("select val from tab order by val");
+    selectStatement.loadLongs(0, result, 0, arrayLength);
+
+    selectStatement.dispose();
+    return result;
   }
 
   private void backupOneStep(boolean sourceInMemory, File destinationFile) throws SQLiteException {
