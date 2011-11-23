@@ -1469,8 +1469,8 @@ public final class SQLiteConnection {
 
   private abstract class BaseController extends SQLiteController {
     public void validate() throws SQLiteException {
-      SQLiteConnection.this.checkThread();
       SQLiteConnection.this.handle();
+      SQLiteConnection.this.checkThread();
     }
 
     public void throwResult(int resultCode, String message, Object additionalMessage) throws SQLiteException {
