@@ -14,11 +14,14 @@ public class SQLiteBackup {
 
   private SQLiteController mySourceController;
 
-  SQLiteBackup(SQLiteController sourceController, SQLiteController destinationController, SWIGTYPE_p_sqlite3_backup handler, SQLiteConnection destination) {
+  private String mySourceName;
+
+  SQLiteBackup(SQLiteController sourceController, SQLiteController destinationController, SWIGTYPE_p_sqlite3_backup handler, SQLiteConnection destination, String sourceName) {
     mySourceController = sourceController;
     myDestinationController = destinationController;
     myHandle = handler;
     myDestination = destination;
+    mySourceName = sourceName;
     Internal.logFine(this, "instantiated");
   }
 
@@ -91,7 +94,7 @@ public class SQLiteBackup {
   @Override
   public String toString() {
 
-    return "Backup [ ->" + myDestination + "]";
+    return "Backup [" + mySourceName + " -> " + myDestination + "]";
   }
 
   private SWIGTYPE_p_sqlite3_backup handle() throws SQLiteException {

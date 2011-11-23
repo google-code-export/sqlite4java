@@ -871,8 +871,9 @@ public final class SQLiteConnection {
     }
 
     SQLiteController destController = destConnection.myUncachedController;
+    String sourceName = this.toString();
 
-    return new SQLiteBackup(myUncachedController, destController, backup, destConnection);
+    return new SQLiteBackup(myUncachedController, destController, backup, destConnection, sourceName);
 
   }
 
