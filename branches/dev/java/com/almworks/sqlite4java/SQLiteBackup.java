@@ -59,7 +59,8 @@ public class SQLiteBackup {
     if (myHandle != null) {
       _SQLiteSwigged.sqlite3_backup_finish(myHandle);
       myHandle = null;
-      mySourceController = myDestinationController = SQLiteController.getDisposed(mySourceController);
+      mySourceController = SQLiteController.getDisposed(mySourceController);
+      myDestinationController = SQLiteController.getDisposed(myDestinationController);
     }
     if (disposeDestinationConnection) {
       myDestination.dispose();
