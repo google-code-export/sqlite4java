@@ -884,6 +884,53 @@ public final class SQLiteConnection {
   public SQLiteBackup initializeBackup(File destDBFile) throws SQLiteException {
     return initializeBackup(destDBFile, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE);
   }
+   //Inspired by code from https://github.com/stellaeof/sqlite4java-custom/
+  /**
+   * Enables/disables sqlite extension loading via sql load_extension function
+   *
+   * @param enabled enable/disable
+   *
+   * @throws SQLiteException
+   */
+  public void enableLoadExtension(boolean enabled) throws SQLiteException {
+    checkThread();
+    SWIGTYPE_p_sqlite3 handle = handle();
+
+    int rc = _SQLiteSwigged.sqlite3_enable_load_extension(handle, enabled ? 1 : 0);
+    throwResult(rc, "enableLoadExtension()", null);
+
+    if (Internal.isFineLogging()) {
+      Internal.logFine(this, "Extension load " + (enabled ? "enabled" : "disabled"));
+    }
+  }
+
+   //Inspired by code from https://github.com/stellaeof/sqlite4java-custom/
+  /**
+   * Loads an extension via the native api (as opposed to SQL).
+   *
+   * @param extensionFile       library
+   * @param entryPoint entry point function
+   *
+   * @throws SQLiteException
+   */
+  public void loadExtension(File extensionFile, String entryPoint) throws SQLiteException {
+    checkThread();
+    SWIGTYPE_p_sqlite3 handle = handle();
+
+    String absolutePath = extensionFile.getAbsolutePath();
+    String additionalErrorInfo[] = {""};
+
+    int rc = _SQLiteSwigged.sqlite3_load_extension(handle, absolutePath, entryPoint, additionalErrorInfo);
+    throwResult(rc, "loadExtension() " + additionalErrorInfo[0], null);
+
+    if (Internal.isFineLogging()) {
+      Internal.logFine(this, "Extension " + absolutePath + " loaded");
+    }
+  }
+
+  public void loadExtension(File extensionFile) throws SQLiteException {
+    loadExtension(extensionFile, null);
+  }
 
   private SQLiteLongArray createArray0(String name, SQLiteController controller) throws SQLiteException {
     SWIGTYPE_p_sqlite3 handle = handle();
