@@ -1304,7 +1304,7 @@ public final class SQLiteConnection {
   void checkThread() throws SQLiteException {
     Thread confinement = myConfinement;
     if (confinement == null) {
-      throw new SQLiteException(WRAPPER_CONFINEMENT_VIOLATED, this + " is not confined");
+      throw new SQLiteException(WRAPPER_MISUSE, this + " is not confined or already disposed");
     }
     Thread thread = Thread.currentThread();
     if (thread != confinement) {
@@ -1470,8 +1470,8 @@ public final class SQLiteConnection {
 
   private abstract class BaseController extends SQLiteController {
     public void validate() throws SQLiteException {
-      SQLiteConnection.this.handle();
       SQLiteConnection.this.checkThread();
+      SQLiteConnection.this.handle();
     }
 
     public void throwResult(int resultCode, String message, Object additionalMessage) throws SQLiteException {
