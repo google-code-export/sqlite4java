@@ -2,12 +2,11 @@ package com.almworks.sqlite4java;
 
 
 import java.io.File;
+import java.util.Locale;
 import java.util.Map;
 
 public class ExtensionLoadTests extends SQLiteConnectionFixture {
 
-//  static final String sep = File.separator;
-//  static final File extensionFile = new File(".." + sep + "build" + sep + "extension_sample" + sep + "half.sqlext");
   private File myExtensionFile;
 
   public void testLoadFailWhenNotEnabled() throws SQLiteException {
@@ -30,10 +29,8 @@ public class ExtensionLoadTests extends SQLiteConnectionFixture {
   public void testExtensionLoad() throws SQLiteException {
     final int number = 8;
     SQLiteConnection connection = memDb().open();
-//    File extensionFile = new File(".." + sep + "build" + sep + "native_tests" + sep + "half.sqlext");
     connection.enableLoadExtension(true);
     connection.loadExtension(myExtensionFile);
-//   new File("").;
     SQLiteStatement stm = connection.prepare("select half(?)").bind(1, number);
     stm.step();
     int half = stm.columnInt(0);
@@ -47,9 +44,17 @@ public class ExtensionLoadTests extends SQLiteConnectionFixture {
     super.setUp();
     String arch = System.getProperty("os.arch");
     String fileSuffix = "." + arch.substring(arch.length() - 2);
+    String osname = System.getProperty("os.name").toLowerCase(Locale.US);
+    if (osname.startsWith("mac") || osname.startsWith("darwin") || osname.startsWith("os x")) {
+      if (System.getProperty("os.version").equals("10.4")) {
+        fileSuffix = "10.4";
+      } else if (!arch.equals("ppc")) {
+        fileSuffix = "";
+      }
+    }
+
     String sep = File.separator;
     myExtensionFile = new File(".." + sep + "build" + sep + "extension_sample" + sep + "half.sqlext" + fileSuffix);
-//    System.out.println(arch);
 
   }
 }
