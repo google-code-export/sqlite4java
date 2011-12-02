@@ -10,19 +10,13 @@ public class ExtensionLoadTests extends SQLiteConnectionFixture {
   private File myExtensionFile;
 
   public void testLoadFailWhenNotEnabled() throws SQLiteException {
-//    System.out.println(arch);
-//    for (Map.Entry<Object, Object> e : System.getProperties().entrySet()) {
-//                System.out.println(e);
-//            }
-//    assertFalse(true);
-
     SQLiteConnection connection = memDb().open();
     connection.enableLoadExtension(false);
     try {
       connection.loadExtension(myExtensionFile);
       fail("Extension load not enabled");
     } catch (SQLiteException e) {
-
+         // O.K.
     }
   }
 
@@ -43,10 +37,11 @@ public class ExtensionLoadTests extends SQLiteConnectionFixture {
   protected void setUp() throws Exception {
     super.setUp();
     String arch = System.getProperty("os.arch");
-    String fileSuffix = "." + arch.substring(arch.length() - 2);
+    String fileSuffix = arch.substring(arch.length() - 2);
     String osname = System.getProperty("os.name").toLowerCase(Locale.US);
+
     if (osname.startsWith("mac") || osname.startsWith("darwin") || osname.startsWith("os x")) {
-      if (System.getProperty("os.version").equals("10.4")) {
+      if (System.getProperty("os.version").contains("10.4")) {
         fileSuffix = "10.4";
       } else if (!arch.equals("ppc")) {
         fileSuffix = "";
@@ -54,7 +49,7 @@ public class ExtensionLoadTests extends SQLiteConnectionFixture {
     }
 
     String sep = File.separator;
-    myExtensionFile = new File(".." + sep + "build" + sep + "extension_sample" + sep + "half.sqlext" + fileSuffix);
+    myExtensionFile = new File(".." + sep + "build" + sep + "extension_sample" + sep + "half.sqlext." + fileSuffix);
 
   }
 }
