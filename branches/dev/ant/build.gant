@@ -277,8 +277,30 @@ target(name: 'test.compile') {
   }
 }
 
+target(name: 'extension.sample.compile')  {
+    depends(['init'])
+    ant.echo(message: ['extension.sample.compile'])
+    ant.mkdir(dir: "$build/extension_sample")
+    platforms.each {String platform ->
+        if (os == 'windows') {
+            depends(['init.wincompile'])
+            checkProp("arch.$platform")
+            buildtype = "debug"
+            def arch = antProp("arch.$platform")
+            ext = arch.substring(arch.length() - 2)
+//            def clargs = antProp("${buildtype}.cl.args") + " " + antProp("${buildtype}.cl.sqlite");
+            clargs = antProp("extension.cl.args")
+            wsdk("${antProp('cl')} $clargs native/sqlite_extension_example.c", "$build/extension_sample/half.sqlext.$ext", arch, buildtype)
+        } else {
+            def clargs = antProp("extension.cc.args.${platform}")
+            ext = platform.substring(platform.length() - 2)
+            ant.exec(dir: mod, command: "${antProp('cc')} $clargs native/sqlite_extension_example.c -o $build/extension_sample/half.sqlext.$ext")
+        }
+    }
+}
+
 target('test': 'run all tests') {
-  depends(['dist', 'test.compile'])
+  depends(['dist', 'test.compile', 'extension.sample.compile'])
   ant.echo(message: "[test]")
   platforms.each { String platform ->
     buildtypes.each { String buildtype ->
