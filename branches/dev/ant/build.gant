@@ -128,6 +128,8 @@ final wsdk = {String arg, String out, String arch, String buildtype ->
   }
 }
 
+final String getExtension (String archName) {archName.substring(archName.length() - 2)}
+
 target(name: 'init.wincompile') {
   depends(['init'])
   ant.exec(dir: mod, command: "cmd /C echo set | cmd /V:ON /D /K \"${antProp('msenv')}\" /x86 /debug ${antProp('msenv.extra')}")
@@ -276,7 +278,6 @@ target(name: 'test.compile') {
     }
   }
 }
-
 target(name: 'extension.sample.compile')  {
     depends(['init'])
     ant.echo(message: ['extension.sample.compile'])
@@ -287,13 +288,20 @@ target(name: 'extension.sample.compile')  {
             checkProp("arch.$platform")
             buildtype = "debug"
             def arch = antProp("arch.$platform")
-            def ext = arch.substring(arch.length() - 2)
-//            def clargs = antProp("${buildtype}.cl.args") + " " + antProp("${buildtype}.cl.sqlite");
+            def ext = getExtension(arch)
             def clargs = antProp("extension.cl.args")
+            clargs = arch == 'x86' ? "$clargs /Gd" : clargs
             wsdk("${antProp('cl')} $clargs /out:$build/extension_sample/half.sqlext.$ext  native/sqlite_extension_example.c", "$build/extension_sample/half.sqlext.$ext", arch, buildtype)
         } else {
+            def ext = getExtension(platform)
+            if (os == 'mac') {
+                if (platform == 'osx') {
+                    ext = ""
+                } else if (platform == 'osx-10.4') {
+                    ext = '10.4'
+                }
+            }
             def clargs = antProp("extension.cc.args.${platform}")
-            def ext = platform.substring(platform.length() - 2)
             ant.exec(dir: mod, command: "${antProp('cc')} $clargs native/sqlite_extension_example.c -o $build/extension_sample/half.sqlext.$ext")
         }
     }
