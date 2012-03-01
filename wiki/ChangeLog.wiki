@@ -1,6 +1,16 @@
 #summary Version-to-version changes
 #labels Featured
 
+=== Build 282 ===
+
+  * SQLite upgraded to 3.7.10
+  * Added support for [http://www.sqlite.org/backup.html SQLite Backup API] - see `SQLiteConnection.initializeBackup()` and `SQLiteBackup` class.
+  * Added support for android with the new binary sqlite4java-android-armv7.so (no need to rename the binary).
+  * Added support for extension loading - see `SQLiteConnection.setExtensionLoadingEnabled()` and `SQLiteConnection.loadExtension()`.
+  * R-Tree support in SQLite compiled in.
+  * Automatic searching for compatible binaries is rewritten and should be more stable. (It looks into sqlite4java.library.path, directory with sqlite4java.jar and java.library.path.)
+  * Fixed issues with searching Long Array virtual table for non-integer values.
+
 === Build 213 ===
 
   * SQLite upgraded to 3.7.4
