@@ -229,6 +229,18 @@ public final class SQLiteConnection {
   }
 
   /**
+   * Allows the size of various constructs for current connection to be limited.
+   * @param id identify a class of constructs to be size limited (use constants "SQLITE_LIMIT_*")
+   * @param newVal defines the new limit for that construct.
+   * @return previous limit for that construct
+   */
+  public int setLimit(int id, int newVal) throws SQLiteException {
+    checkThread();
+    return _SQLiteSwigged.sqlite3_limit(connectionHandle(), id, newVal);
+  }
+
+
+  /**
    * Opens the connection, optionally creating the database.
    * <p/>
    * If connection is already open, fails gracefully, allowing connection can be used further.

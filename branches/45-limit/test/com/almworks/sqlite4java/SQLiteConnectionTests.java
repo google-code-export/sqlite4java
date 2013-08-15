@@ -85,6 +85,14 @@ public class SQLiteConnectionTests extends SQLiteConnectionFixture {
     } catch (SQLiteException e) {
       // ok
     }
+    assertTrue(db.setLimit(SQLiteConstants.SQLITE_LIMIT_COLUMN, 5) == 2000);
+    db.exec("create table yyy (a integer, b integer, c integer, d integer, e integer);");
+    try {
+      db.exec("create table y (a integer, b integer, c integer, d integer, e integer, excessiveColumnName integer);");
+      fail("exec should fail due to column count limitation");
+    } catch (SQLiteException e) {
+      // ok
+    }
   }
 
   public void testCannotReopen() throws SQLiteException {
