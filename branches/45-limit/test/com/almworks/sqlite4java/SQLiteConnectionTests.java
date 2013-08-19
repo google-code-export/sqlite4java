@@ -90,8 +90,8 @@ public class SQLiteConnectionTests extends SQLiteConnectionFixture {
   public void testSetAndGetLimit() throws SQLiteException {
     SQLiteConnection db = fileDb();
     db.open();
-    assertTrue(db.setLimit(SQLiteConstants.SQLITE_LIMIT_COLUMN, 5) == 2000);
-    assertTrue(db.getLimit(SQLiteConstants.SQLITE_LIMIT_COLUMN) == 5);
+    assertEquals(db.getLimit(SQLiteConstants.SQLITE_LIMIT_COLUMN), db.setLimit(SQLiteConstants.SQLITE_LIMIT_COLUMN, 5));
+    assertEquals(5, db.getLimit(SQLiteConstants.SQLITE_LIMIT_COLUMN));
     db.exec("create table yyy (a integer, b integer, c integer, d integer, e integer);");
     try {
       db.exec("create table y (a integer, b integer, c integer, d integer, e integer, excessiveColumnName integer);");
