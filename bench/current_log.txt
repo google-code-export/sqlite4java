@@ -1,0 +1,12 @@
+# VM invoker: /home/evjava/programs/jdk1.7.0_55/jre/bin/java
+# VM options: -da:com.almworks.sqlite4java
+# Warmup: 4 iterations, 8 s each
+# Measurement: 4 iterations, 10 s each
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Throughput, ops/time
+# Benchmark: org.sample.BulkLoadBenchmark.testBulkRead1000
+
+# Run progress: 0.00% complete, ETA 00:04:48
+# Fork: 1 of 1
+# Warmup Iteration   1: 0.196 ops/s
+# Warmup Iteration   2: 
