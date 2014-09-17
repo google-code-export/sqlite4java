@@ -26,12 +26,12 @@
 package org.sample;
 
 import com.almworks.sqlite4java.SQLiteConnection;
-import com.almworks.sqlite4java.SQLiteConnectionFixture;
 import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
+import java.io.File;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -43,15 +43,15 @@ import static org.openjdk.jmh.annotations.Level.Trial;
 @Fork(1)
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Warmup(iterations = 4, time = 8, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 4, time = 10, timeUnit = TimeUnit.SECONDS)
-public class BulkLoadBenchmark extends SQLiteConnectionFixture {
+@Warmup(iterations = 4, time = 3, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 5, time = 6, timeUnit = TimeUnit.SECONDS)
+public class BulkLoadBenchmark {
   private final Random RAND = new Random();
   private final Blackhole bh = new Blackhole();
 
-//  private SQLiteConnection sqlite;
   private int count = 1000 * 1000;
   private SQLiteStatement statement;
+  private SQLiteConnection myDB;
 
   @Setup(Trial)
   public void inic0() {
@@ -61,18 +61,24 @@ public class BulkLoadBenchmark extends SQLiteConnectionFixture {
 
   @Setup(Invocation)
   public void inic() throws Exception {
-    SQLiteConnection sqlite = fileDb().open();
-    sqlite.exec("create table x (id integer not null primary key)");
-    sqlite.exec("begin");
-    SQLiteStatement st = sqlite.prepare("insert into x values(?)");
+    myDB = new SQLiteConnection(File.createTempFile("BulkLoadBenchmark_database", "tmp")).open();
+    myDB.exec("drop table if exists x");
+    myDB.exec("create table x (id integer not null primary key)");
+    myDB.exec("begin");
+    SQLiteStatement st = myDB.prepare("insert into x values(?)");
     for (int i = 0; i < count; i++) {
       st.bind(1, RAND.nextLong());
       st.step();
       st.reset();
     }
     st.dispose();
-    sqlite.exec("commit");
-    statement = sqlite.prepare("select id from x order by (50000-id)*(25000-id)");
+    myDB.exec("commit");
+    statement = myDB.prepare("select id from x order by (50000-id)*(25000-id)");
+  }
+
+  @TearDown(Invocation)
+  public void tearDown() throws Exception {
+    myDB.dispose();
   }
 
   @Benchmark

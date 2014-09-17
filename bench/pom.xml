@@ -80,12 +80,6 @@ questions.
             <version>0.88</version>
         </dependency>
 
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.8.2</version>
-        </dependency>
     </dependencies>
 
     <build>
