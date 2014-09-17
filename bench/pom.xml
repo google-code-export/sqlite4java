@@ -73,13 +73,6 @@ questions.
             <type>so</type>
             <version>${sqlite4java.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.almworks.sqlite4java</groupId>
-            <artifactId>tests</artifactId>
-            <version>0.88</version>
-        </dependency>
-
     </dependencies>
 
     <build>
