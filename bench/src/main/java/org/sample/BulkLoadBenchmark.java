@@ -43,8 +43,8 @@ import static org.openjdk.jmh.annotations.Level.Trial;
 @Fork(1)
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Warmup(iterations = 4, time = 3, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 5, time = 6, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 3, time = 3, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 4, time = 6, timeUnit = TimeUnit.SECONDS)
 public class BulkLoadBenchmark {
   private final Random RAND = new Random();
   private final Blackhole bh = new Blackhole();
@@ -61,7 +61,8 @@ public class BulkLoadBenchmark {
 
   @Setup(Invocation)
   public void inic() throws Exception {
-    myDB = new SQLiteConnection(File.createTempFile("BulkLoadBenchmark_database", "tmp")).open();
+    myDB = new SQLiteConnection(new File("temp.db")).open();
+//    myDB = new SQLiteConnection(File.createTempFile("BulkLoadBenchmark_database", "tmp")).open();
     myDB.exec("drop table if exists x");
     myDB.exec("create table x (id integer not null primary key)");
     myDB.exec("begin");
@@ -73,7 +74,8 @@ public class BulkLoadBenchmark {
     }
     st.dispose();
     myDB.exec("commit");
-    statement = myDB.prepare("select id from x order by (50000-id)*(25000-id)");
+    statement = myDB.prepare("select id from x");
+//    statement = myDB.prepare("select id from x order by (50000-id)*(25000-id)");
   }
 
   @TearDown(Invocation)
