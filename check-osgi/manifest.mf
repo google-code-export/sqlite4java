@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-Vendor: Apache Felix
+Bundle-Version: 1.0.0
+Bundle-Name: Service listener example
+Created-By: 1.7.0_55 (Oracle Corporation)
+Bundle-Activator: com.almworks.sqlite4java_checker.Activator
+Bundle-Description: A bundle that displays messages at startup and whe
+ n service events occur
+Import-Package: org.osgi.framework, com.almworks.sqlite4java
