@@ -5,9 +5,9 @@
 || [https://d1.almworks.com/.files/sqlite4java/sqlite4java-392.zip sqlite4java-392.zip] || sqlite4java-392 with *SQLite 3.8.7*, Windows/Linux/Mac OS X/Android binaries || `964d49c5da1b9666297db63314a6015d` ||
 || [https://d1.almworks.com/.files/sqlite4java/com.almworks.sqlite4java-1.0.392.jar com.almworks.sqlite4java-1.0.392.jar] || OSGi bundle with sqlite4java-392 || `fd865eabb43934b62a5ae18a2c62a7f3` ||
 
-*Previous versions:*
-  * [http://code.google.com/p/sqlite4java/downloads/detail?name=sqlite4java-282.zip sqlite4java-282] with *SQLite 3.7.10* 
-
 ==Older Files==
+
+*Previous version:*
+  * [http://code.google.com/p/sqlite4java/downloads/detail?name=sqlite4java-282.zip sqlite4java-282] with *SQLite 3.7.10* 
 
 Older versions and contributions are available for download from  [https://code.google.com/p/sqlite4java/downloads/list?can=1&q= Google Code's Download Section] 
