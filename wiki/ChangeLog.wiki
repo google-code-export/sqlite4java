@@ -1,6 +1,19 @@
 #summary Version-to-version changes
 #labels Featured
 
+=== Build 388 ===
+
+  * SQLite upgraded to 3.8.7
+  * Improved support for Android, added binary for x86-based Android.
+  * Improved support for Mac OS X, fixed a number of issues with locating and loading binary.
+  ** *Dropped support* for Mac OS X 10.4 or earlier, and PowerPC-based Macs.
+  * Added OSGi bundle.
+  * Added support for column metadata - see `SQLiteConnection.getTableColumnMetadata()` and `SQLiteColumnMetadata` class.
+  * Added method `SQLiteConnection.isReadOnly()` to check if the database is opened on a read-only medium or with read-only flag.
+  * Added support for non-ASCII characters in SQL (`exec`, `prepareStatement`).
+  * Added `SQLiteConnection.setLimit()` method.
+  * Added `SQLiteConnection.bind(...)` methods that take parameter names instead of parameter indexes.
+
 === Build 282 ===
 
   * SQLite upgraded to 3.7.10
